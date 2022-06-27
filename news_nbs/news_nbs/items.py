@@ -9,17 +9,17 @@ from bs4 import BeautifulSoup
 from w3lib.html import remove_tags
 from unidecode import unidecode
 
-def remove_n(value):
-    return value.replace("\n", "")
+# def remove_n(value):
+#     return value.replace("\n", "")
 
-def bs_clean(value):
-    return value.BeautifulSoup(value, "lxml").get_text().strip()
+# def bs_clean(value):
+#     return value.BeautifulSoup(value, "lxml").get_text().strip()
 
-def separation(value):
-    text = " ".join(value).split('<p style="font-size:14px">')[0]
-    text = text.replace("\n", "")
-    text =  BeautifulSoup(text, "lxml").get_text().strip()
-    return text  
+# def separation(value):
+#     text = " ".join(value).split('<p style="font-size:14px">')[0]
+#     text = text.replace("\n", "")
+#     text =  BeautifulSoup(text, "lxml").get_text().strip()
+#     return text  
 
 # def clean_uni(value):
 #     return value.replace("\xa0"," ")
