@@ -4,46 +4,73 @@ from scrapy.selector import Selector
 from scrapy.loader import ItemLoader
 from news_nbs.items import NewsNbsItem
 from unidecode import unidecode
+import json
 
 class NewsSpider(scrapy.Spider):
     name = 'news'
-    item = NewsNbsItem()
-    start_urls = [  # "https://nbs.sk/wp-json/nbs/v1/post/list",
-        "file:///C:/git/Scrapy/news_nbs/api_response.html"
-    ]
+    
+    start_urls = [ "https://nbs.sk/en/press/news-overview/"]
 
-    # def parse(self, response):
-    #     sel = Selector(response)
-    #     articles = sel.css("div.archive-results > a.archive-results__item")
-    #     for article in articles:
-            
-    #         loader = ItemLoader(item=NewsNbsItem(), selector=article)
+    headers = {
+    'Accept': 'application/json, */*;q=0.1',
+    'Accept-Language': 'en-US,en;q=0.9,bg;q=0.8',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Content-Type': 'application/json',
+    'Cookie': 'cookie_cnsnt=required%2Canalytics; _gid=GA1.2.1716664283.1655990651; pll_language=en; _ga=GA1.1.1842644514.1655990645; _ga_M9SPDPXFS5=GS1.1.1656318220.30.0.1656318231.0',
+    'DNT': '1',
+    'Origin': 'https://nbs.sk',
+    'Pragma': 'no-cache',
+    'Referer': 'https://nbs.sk/en/press/news-overview/',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+    'X-WP-Nonce': '135f09d07e',
+    'sec-ch-ua': '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    }
 
-    #         loader.add_css("date", "div.date::text")
-    #         loader.add_css("labels", "div.label::text")
-    #         loader.add_css("name", "h2.h3::text")
-    #         loader.add_css("link", "a::attr(href)")
-    #         links = response.css("a::attr(href)")
-    #         yield loader.load_item()
-    #     for a in links:
-    #         print(a)
-    #         yield response.follow(a, callback=self.parse_content, meta={"item": loader.load_item()})
-         
+    payload = json.dumps({
+    'gbConfig': {
+        'limit': 20,
+        'categories': [
+            32424,
+            32416,
+            8,
+            32418,
+            32420,
+        ],
+        'className': '',
+        'template': 'links',
+        'tags': [],
+    },
+    'lang': 'en',
+    'limit': 20,
+    'offset': 0,
+    'filter': {
+        'lang': 'en',
+    },
+    'onlyData': False,
+    })
 
-    # def parse_content(self, response):
-    #     # print(response.meta['item'])
-    #     selector = Selector(response=response)# type='html')
-    #     loader = ItemLoader(item=response.meta["item"],selector=selector)
-    #     #loader.add_css("content", "div.section > p")
-    #     #loader.add_css("content","div.nbs-content")
-        
-    #     yield loader.load_item()
 
+    def start_requests(self):
+        urls = "https://nbs.sk/wp-json/nbs/v1/post/list?_locale=user"
 
-
-
+        yield scrapy.Request(
+            url=urls,
+            method="POST",
+            headers=self.headers,
+            body=self.payload,
+            callback=self.parse,
+        )
+ 
     def parse(self, response):
-        sel = Selector(response)
+        res = json.loads(response.body)['html']
+        sel = Selector(text=res)
+        
         articles = sel.css("div.archive-results > a.archive-results__item")
         for article in articles:
             
@@ -71,36 +98,6 @@ class NewsSpider(scrapy.Spider):
 
             item["content"] = [unidecode(step4)]
         except:
-            item["content"] = "Nothing for now"
+            item["content"] = "Not a valid news content"
         yield item
 
-
-
-
-
-#  '''
-#             item = NewsNbsItem()
-#             item["date"] = article.css("div.date::text").get()
-#             item["labels"] = article.css("div.label::text").get()
-#             item["name"] = article.css("h2.h3::text").get()
-#             yield item
-#             links = response.css("a::attr(href)").get()
-#             for a in links:
-#                 yield response.follow(
-#                     a, callback=self.parse_content, meta={"item": item})
-# '''
-
-    
-#     '''
-#     #     item = response.meta["item"]
-#     #     try:
-#     #         step1 = response.xpath("//p").getall()
-#     #         step2 = " ".join(step1).split('<p style="font-size:14px">')[0]
-#     #         step3 = step2.replace("\n", "")
-#     #         step4 = BeautifulSoup(step3, "lxml").get_text().strip()
-#     #         item["content"] = [step4]
-#     #     except:
-#     #         item["content"] = "Nothing for now"
-#     #     yield item
-
-# '''
