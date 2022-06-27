@@ -10,7 +10,7 @@ import sqlite3
 class NewsNbsPipeline(object):
 
     def __init__(self):
-        self.conn = sqlite3.connect('news.db')
+        self.conn = sqlite3.connect('news.db',check_same_thread=False)
         self.cur = self.conn.cursor()
         self.create_table()
 
