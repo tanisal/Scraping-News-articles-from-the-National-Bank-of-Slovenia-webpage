@@ -11,25 +11,26 @@ class NewsSpider(scrapy.Spider):
     #Main url which we will scrape
     start_urls = [ "https://nbs.sk/en/press/news-overview/"]
     #Headers for the request
-    headers = {
-    'Accept': 'application/json, */*;q=0.1',
+    headers = {  
+    'Accept': 'application/json, */*;q=0.1', 
     'Accept-Language': 'en-US,en;q=0.9,bg;q=0.8',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Content-Type': 'application/json',
-    'Cookie': 'cookie_cnsnt=required%2Canalytics; _gid=GA1.2.1716664283.1655990651; pll_language=en; _ga=GA1.1.1842644514.1655990645; _ga_M9SPDPXFS5=GS1.1.1656318220.30.0.1656318231.0',
-    'DNT': '1',
-    'Origin': 'https://nbs.sk',
-    'Pragma': 'no-cache',
-    'Referer': 'https://nbs.sk/en/press/news-overview/',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-origin',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
-    'X-WP-Nonce': '135f09d07e',
-    'sec-ch-ua': '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
+    'Cache-Control': 'no-cache' ,
+    'Connection': 'keep-alive' ,
+    'Content-Type': 'application/json' ,
+    'Cookie': 'cookie_cnsnt=required%2Canalytics; _gid=GA1.2.1716664283.1655990651; pll_language=en; _ga=GA1.1.1842644514.1655990645; _ga_M9SPDPXFS5=GS1.1.1656397592.34.0.1656397600.0' ,
+    'DNT':'1' ,
+    'Origin': 'https://nbs.sk' ,
+    'Pragma': 'no-cache' ,
+    'Referer': 'https://nbs.sk/en/press/news-overview/' ,
+    'Sec-Fetch-Dest': 'empty' ,
+    'Sec-Fetch-Mode': 'cors' ,
+    'Sec-Fetch-Site': 'same-origin' ,
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36' ,
+    'X-WP-Nonce': 'a3ba779f9e' ,
+    'sec-ch-ua': '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"' ,
+    'sec-ch-ua-mobile': '?0' ,
+    'sec-ch-ua-platform': '"Windows"'
+
     }
     #Payload for the request post method, which we need in order to receive info back 
     #For the limit in the json file i put 20, for 20 articles new need
@@ -88,31 +89,29 @@ class NewsSpider(scrapy.Spider):
             links = article.css("a::attr(href)")
             for a in links:
                 #sending one by one the link to the next parse function for second level scraping
-                yield response.follow(a, callback=self.parse_content, meta={"item": item})
+                yield response.follow(a, callback=self.parse_content, meta={"item": item},dont_filter = True)
 
 
     #Second level parse function, to grab the content of the individual news
     def parse_content(self,response):
-        print(response)
-
         
-        # #transfering the meta of item saved in the first level above
-        # item = response.meta["item"]
-        # try:
-        #     #In order to take the news content from the different website with different 
-        #     #structures i took a wider scraping aproach, taking all the paragraph raw info
-        #     step1 = response.xpath("//p").getall()
-        #     #cleaning the data
-        #     step2 = " ".join(step1).split('<p style="font-size:14px">')[0]
-        #     #further cleaning
-        #     step3 = step2.replace("\n", "")
-        #     #removing the html tags/ bs4 wors better here that w3lib.html
-        #     step4 = BeautifulSoup(step3, "lxml").get_text().strip()
-        #     #saving the content, clening the unicode giberish
-        #     item["content"] = [unidecode(step4)]
-        # except:
-        #     #if i don find a website with paragpahs , then receiving exeption
-        #     item["content"] = "Not a valid news content"
-        # #returning all the collected data from level one and two
-        # yield item
+        #transfering the meta of item saved in the first level above
+        item = response.meta["item"]
+        try:
+            #In order to take the news content from the different website with different 
+            #structures i took a wider scraping aproach, taking all the paragraph raw info
+            step1 = response.xpath("//p").getall()
+            #cleaning the data
+            step2 = " ".join(step1).split('<p style="font-size:14px">')[0]
+            #further cleaning
+            step3 = step2.replace("\n", "")
+            #removing the html tags/ bs4 wors better here that w3lib.html
+            step4 = BeautifulSoup(step3, "lxml").get_text().strip()
+            #saving the content, clening the unicode giberish
+            item["content"] = [unidecode(step4)]
+        except:
+            #if i don find a website with paragpahs , then receiving exeption
+            item["content"] = "Not a valid news content"
+        #returning all the collected data from level one and two
+        yield item
 

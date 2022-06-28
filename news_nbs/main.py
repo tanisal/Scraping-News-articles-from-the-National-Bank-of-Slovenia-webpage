@@ -8,7 +8,7 @@ app = FastAPI()
 db_conn = NewsNbsPipeline()
 
 #incoming data from sqlite database from the pipeline of the scrapy project
-news_data = db_conn.cur.execute("""SELECT * FROM news_db""")
+news_data = db_conn.cur.execute("""SELECT * FROM news_db ORDER BY date""")
 #creating id's for the entries of the database and formating them for easy to use afterwards
 news_data_enumerated=dict((k,v) for k,v in enumerate(news_data,start=1))
 
