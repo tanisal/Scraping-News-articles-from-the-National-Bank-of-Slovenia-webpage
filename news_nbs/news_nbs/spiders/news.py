@@ -1,9 +1,10 @@
 import scrapy
-from bs4 import BeautifulSoup
+import re
 from scrapy.selector import Selector
 from news_nbs.items import NewsNbsItem
 from scrapy.loader import ItemLoader
-
+from unidecode import unidecode
+from w3lib.html import remove_tags
 import json
 
 
@@ -82,51 +83,43 @@ class NewsSpider(scrapy.Spider):
         #looping through all the articles info on the page and saving it in a item
         articles = sel.css("div.archive-results > a.archive-results__item")
         for article in articles:
-            loader = ItemLoader(item=NewsNbsItem(),selector=article)
-            loader.add_css("date","div.date::text")
-            loader.add_css("labels","div.label::text")
-            loader.add_css("name","h2.h3::text")
-            loader.add_css("link","a::attr(href)")
             
-            
-            # #creating item instance
-            # item=NewsNbsItem()
-            # #adding needed info
-            # item["date"] = article.css("div.date::text").get()
-            # item["labels"] = article.css("div.label::text").getall()
-            # item["name"] = unidecode(article.css("h2.h3::text").get())
-            # item["link"] = article.css("a::attr(href)").get()
-            # #Taking all the links of the articles, and looping through them
+            #creating item instance
+            item=NewsNbsItem()
+            #adding needed info
+            item["date"] = article.css("div.date::text").get()
+            item["labels"] = article.css("div.label::text").getall()
+            item["name"] = unidecode(article.css("h2.h3::text").get())
+            item["link"] = article.css("a::attr(href)").get()
+            #Taking all the links of the articles, and looping through them
             links = article.css("a::attr(href)")
             for a in links:
                 #sending one by one the link to the next parse function for second level scraping
-                yield response.follow(a, callback=self.parse_content, meta={"item":loader.load_item() },dont_filter = True)
+                # don't filter 
+                yield response.follow(a, callback=self.parse_content, meta={"item":item },dont_filter = True)
 
 
     #Second level parse function, to grab the content of the individual news
     def parse_content(self,response):
-        loader = ItemLoader(item = response.meta["item"],response=response)
-        loader.add_xpath("content","//p")
-        #loader.add_xpath("content","//*[@id="main"]/div[2]/div/div[1]/div/ul/li[1]/text()")
-        yield loader.load_item()
-
-        # #transfering the meta of item saved in the first level above
-        # item = response.meta["item"]
-        # try:
-        #     #In order to take the news content from the different website with different 
-        #     #structures i took a wider scraping aproach, taking all the paragraph raw info
-        #     step1 = response.xpath("//p").getall()
-        #     #cleaning the data
-        #     step2 = " ".join(step1).split('<p style="font-size:14px">')[0]
-        #     #further cleaning
-        #     step3 = step2.replace("\n", "")
-        #     #removing the html tags/ bs4 wors better here that w3lib.html
-        #     step4 = BeautifulSoup(step3, "lxml").get_text().strip()
-        #     #saving the content, clening the unicode giberish
-        #     item["content"] = [unidecode(step4)]
-        # except:
-        #     #if i don find a website with paragpahs , then receiving exeption
-        #     item["content"] = "Not a valid news content"
-        # #returning all the collected data from level one and two
-        # yield item
+       
+        #transfering the meta of item saved in the first level above
+        item = response.meta["item"]
+        try:
+            #In order to take the news content from the different website with different 
+            #structures i took a wider scraping aproach, taking all the paragraph raw info
+            step1 = response.xpath("//p").getall()
+            #cleaning the data
+            step2 = " ".join(step1).split('<p style="font-size:14px">')[0]
+            #further cleaning
+            step3 = step2.replace("\n", "").replace("\t\t\t","")
+            #removing the html tags/ bs4 wors better here that w3lib.html
+            step4= remove_tags(step3)
+            step5= re.sub(' +', ' ', step4)
+            #saving the content, clening the unicode giberish
+            item["content"] = [unidecode(step5)]
+        except:
+            #if i don find a website with paragpahs , then receiving exeption
+            item["content"] = "Not a valid news content"
+        #returning all the collected data from level one and two
+        yield item
 
