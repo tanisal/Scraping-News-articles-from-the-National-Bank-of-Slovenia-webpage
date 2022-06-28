@@ -22,7 +22,7 @@ class NewsNbsPipeline(object):
         self.cur.execute("""
         CREATE TABLE IF NOT EXISTS news_db(
         date TEXT,
-        name TEXT,
+        name TEXT PRIMARY KEY,
         link TEXT,
         labels TEXT, 
         content TEXT 
@@ -32,7 +32,7 @@ class NewsNbsPipeline(object):
     def process_item(self, item, spider):
 
         self.cur.execute("""
-        INSERT  INTO news_db (date, name, link, labels, content) VALUES (?, ?, ?, ?, ?);
+        INSERT OR IGNORE INTO news_db (date, name, link, labels, content) VALUES (?, ?, ?, ?, ?);
         """,
         (
             str(item['date']),
